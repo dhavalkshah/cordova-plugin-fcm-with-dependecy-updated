@@ -94,16 +94,18 @@ public class FCMPlugin extends CordovaPlugin {
 				});
 			}
 			else if (action.equals("unsubscribeFromTopic")) {
-				cordova.getThreadPool().execute(new Runnable() {
-					public void run() {
-						try{
-							FirebaseMessaging.getInstance().unsubscribeFromTopic( args.getString(0) );
-							callbackContext.success();
-						}catch(Exception e){
-							callbackContext.error(e.getMessage());
-						}
-					}
-				});
+				this.isUnsubscribeFromTopic(callbackContext, args.getString(0), args.getJSONObject(1));
+				return true;
+				// cordova.getThreadPool().execute(new Runnable() {
+				// 	public void run() {
+				// 		try{
+				// 			FirebaseMessaging.getInstance().unsubscribeFromTopic( args.getString(0) );
+				// 			callbackContext.success();
+				// 		}catch(Exception e){
+				// 			callbackContext.error(e.getMessage());
+				// 		}
+				// 	}
+				// });
 			}
 			else if (action.equals("logEvent")) {
 				this.logEvent(callbackContext, args.getString(0), args.getJSONObject(1));
@@ -132,7 +134,37 @@ public class FCMPlugin extends CordovaPlugin {
         //});
 		return true;
 	}
+	private void isUnsubscribeFromTopic(final CallbackContext callbackContext, final String name, final JSONObject params){
+		String func="";
+		if(params.has("func")){
+			func = params.getString("func");
+			Log.d(TAG,"isUnsubscribeFromTopic: Function Name is present:"+func);
+			if(func.equals("logEvent")){
+				return this.logEvent(callbackContext, name, params);
+			}
+			else{
+				return this.unsubscribeFromTopic(callbackContext, name, params);
+			}
+		}
+		else{
+			return this.unsubscribeFromTopic(callbackContext, name, params);
+		}
+	}
+	private void unsubscribeFromTopic(final CallbackContext callbackContext, final String name, final JSONObject params){
+		Log.d(TAG,"unsubscribeFromTopic: Trying to unsubscribe a topic");
+		cordova.getThreadPool().execute(new Runnable() {
+			public void run() {
+				try{
+					FirebaseMessaging.getInstance().unsubscribeFromTopic( name );
+					callbackContext.success();
+				}catch(Exception e){
+					callbackContext.error(e.getMessage());
+				}
+			}
+		});
+	}
 	private void logEvent(final CallbackContext callbackContext, final String name, final JSONObject params) throws JSONException {
+		Log.d(TAG,"logEvent: Trying to logEvent :"+name);
         final Bundle bundle = new Bundle();
         Iterator iter = params.keys();
         while (iter.hasNext()) {
