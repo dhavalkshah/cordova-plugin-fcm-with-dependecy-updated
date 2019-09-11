@@ -16,6 +16,7 @@ import android.os.Bundle;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.google.firebase.analytics.FirebaseAnalytics;
+import com.crashlytics.android.Crashlytics;
 
 import java.util.Map;
 import java.util.Iterator;
