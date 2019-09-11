@@ -4,6 +4,14 @@ function FCMPlugin() {
 	console.log("FCMPlugin.js: is created");
 }
 
+FCMPlugin.prototype.setScreenName = function (name, success, error) {
+	exec(success, error, "FCMPlugin", "setScreenName", [name]);
+  };
+// LOG EVENT //
+FCMPlugin.prototype.logEvent = function( name, params, success, error ){
+	exec(success, error, "FCMPlugin", 'logEvent', [name, params]);
+}
+
 // SUBSCRIBE TO TOPIC //
 FCMPlugin.prototype.subscribeToTopic = function( topic, success, error ){
 	exec(success, error, "FCMPlugin", 'subscribeToTopic', [topic]);

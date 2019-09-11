@@ -5,6 +5,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaInterface;
 import android.util.Log;
+import android.content.Context;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -14,8 +15,10 @@ import android.os.Bundle;
 
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.iid.FirebaseInstanceId;
+import com.google.firebase.analytics.FirebaseAnalytics;
 
 import java.util.Map;
+import java.util.Iterator;
 
 public class FCMPlugin extends CordovaPlugin {
  
@@ -26,15 +29,19 @@ public class FCMPlugin extends CordovaPlugin {
 	public static String tokenRefreshCallBack = "FCMPlugin.onTokenRefreshReceived";
 	public static Boolean notificationCallBackReady = false;
 	public static Map<String, Object> lastPush = null;
+	private FirebaseAnalytics mFirebaseAnalytics;
 	 
 	public FCMPlugin() {}
 	
 	public void initialize(CordovaInterface cordova, CordovaWebView webView) {
 		super.initialize(cordova, webView);
+		final Context context = this.cordova.getActivity().getApplicationContext();
 		gWebView = webView;
 		Log.d(TAG, "==> FCMPlugin initialize");
 		FirebaseMessaging.getInstance().subscribeToTopic("android");
 		FirebaseMessaging.getInstance().subscribeToTopic("all");
+		mFirebaseAnalytics = FirebaseAnalytics.getInstance(context);
+		mFirebaseAnalytics.setAnalyticsCollectionEnabled(true);
 	}
 	 
 	public boolean execute(final String action, final JSONArray args, final CallbackContext callbackContext) throws JSONException {
@@ -97,6 +104,10 @@ public class FCMPlugin extends CordovaPlugin {
 					}
 				});
 			}
+			else if (action.equals("logEvent")) {
+				this.logEvent(callbackContext, args.getString(0), args.getJSONObject(1));
+				return true;
+			}
 			else{
 				callbackContext.error("Method not found");
 				return false;
@@ -120,6 +131,31 @@ public class FCMPlugin extends CordovaPlugin {
         //});
 		return true;
 	}
+	private void logEvent(final CallbackContext callbackContext, final String name, final JSONObject params) throws JSONException {
+        final Bundle bundle = new Bundle();
+        Iterator iter = params.keys();
+        while (iter.hasNext()) {
+            String key = (String) iter.next();
+            Object value = params.get(key);
+
+            if (value instanceof Integer || value instanceof Double) {
+                bundle.putFloat(key, ((Number) value).floatValue());
+            } else {
+                bundle.putString(key, value.toString());
+            }
+        }
+        cordova.getThreadPool().execute(new Runnable() {
+            public void run() {
+                try {
+                    mFirebaseAnalytics.logEvent(name, bundle);
+                    callbackContext.success();
+                } catch (Exception e) {
+                    Crashlytics.logException(e);
+                    callbackContext.error(e.getMessage());
+                }
+            }
+        });
+    }
 	
 	public static void sendPushPayload(Map<String, Object> payload) {
 		Log.d(TAG, "==> FCMPlugin sendPushPayload");
