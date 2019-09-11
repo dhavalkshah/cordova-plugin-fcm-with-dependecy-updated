@@ -94,7 +94,7 @@ public class FCMPlugin extends CordovaPlugin {
 				});
 			}
 			else if (action.equals("unsubscribeFromTopic")) {
-				this.isUnsubscribeFromTopic(callbackContext, args.getString(0), args.getJSONObject(1));
+				this.isUnsubscribeFromTopic(callbackContext, args.getString(0));
 				return true;
 				// cordova.getThreadPool().execute(new Runnable() {
 				// 	public void run() {
@@ -134,23 +134,27 @@ public class FCMPlugin extends CordovaPlugin {
         //});
 		return true;
 	}
-	private void isUnsubscribeFromTopic(final CallbackContext callbackContext, final String name, final JSONObject params){
-		String func="";
-		if(params.has("func")){
-			func = params.getString("func");
-			Log.d(TAG,"isUnsubscribeFromTopic: Function Name is present:"+func);
+	private void isUnsubscribeFromTopic(final CallbackContext callbackContext, final String name){
+		Log.d(TAG,"isUnsubscribeFromTopic: Data is:"+name);
+		try{
+			JSONObject param = new JSONObject(name);
+			String func = param.has("func")?param.getString("func"):"";
 			if(func.equals("logEvent")){
-				return this.logEvent(callbackContext, name, params);
+				String eventName = param.getString("eventName");
+				param.remove("func");
+				param.remove("eventName");
+				this.logEvent(callbackContext, eventName, param);
 			}
 			else{
-				return this.unsubscribeFromTopic(callbackContext, name, params);
+				String topic = param.getString("topic");
+				this.unsubscribeFromTopic(callbackContext, topic);
 			}
 		}
-		else{
-			return this.unsubscribeFromTopic(callbackContext, name, params);
+		catch(Exception e){
+			this.unsubscribeFromTopic(callbackContext, name);
 		}
 	}
-	private void unsubscribeFromTopic(final CallbackContext callbackContext, final String name, final JSONObject params){
+	private void unsubscribeFromTopic(final CallbackContext callbackContext, final String name){
 		Log.d(TAG,"unsubscribeFromTopic: Trying to unsubscribe a topic");
 		cordova.getThreadPool().execute(new Runnable() {
 			public void run() {

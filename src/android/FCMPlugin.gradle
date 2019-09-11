@@ -1,8 +1,8 @@
 buildscript {
-    repositories {
-        jcenter()
-        mavenLocal()
-    }
+	repositories {
+            jcenter()
+			mavenLocal()
+        }
     dependencies {
         classpath 'com.android.tools.build:gradle:+'
         classpath 'com.google.gms:google-services:4.1.+'
